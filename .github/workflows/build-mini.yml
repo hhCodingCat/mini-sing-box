@@ -68,15 +68,16 @@ jobs:
           echo "Compressed size:"
           ls -lh dist/sing-box
 
-          # Package as OpenWrt APK (aarch64)
+          # Package as OpenWrt APK (aarch64 & aarch64_cortex-a53)
           APK_VER=$(echo "${VERSION}" | sed 's/^v//')
+          .github/build_openwrt_apk.sh "aarch64_cortex-a53" "${APK_VER}" "dist/sing-box" "dist/sing-box_${APK_VER}_openwrt_aarch64_cortex-a53.apk"
           .github/build_openwrt_apk.sh "aarch64" "${APK_VER}" "dist/sing-box" "dist/sing-box_${APK_VER}_openwrt_aarch64.apk"
           ls -lh dist/*.apk
 
           cd dist
           tar -czvf "sing-box-${VERSION}-linux-arm64.tar.gz" sing-box
           sha256sum "sing-box-${VERSION}-linux-arm64.tar.gz" > "sing-box-${VERSION}-linux-arm64.tar.gz.sha256"
-          sha256sum *.apk > "sing-box-${VERSION}-openwrt-aarch64.apk.sha256"
+          sha256sum *.apk > "sing-box-${VERSION}-openwrt.apk.sha256"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
