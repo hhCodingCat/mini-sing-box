@@ -1,0 +1,90 @@
+name: Build Mini Sing-Box
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本标签 (例如 v1.14.4 或 1.14.4)'
+        required: false
+        default: 'custom'
+        type: string
+  push:
+    branches:
+      - testing
+      - main
+    paths:
+      - '.github/workflows/build-mini.yml'
+
+jobs:
+  build:
+    name: Build Mini sing-box (linux/arm64)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.5'
+          cache: true
+
+      - name: Install UPX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y upx-ucl
+
+      - name: Build sing-box
+        run: |
+          set -xeuo pipefail
+          VERSION="${{ inputs.version }}"
+          if [ -z "$VERSION" ] || [ "$VERSION" = "custom" ]; then
+            TAG=$(git describe --tags --always 2>/dev/null || echo "mini")
+            VERSION="${TAG}"
+          fi
+          
+          TAGS="with_quic,with_utls,badlinkname,tfogo_checklinkname0"
+          LDFLAGS="-X 'github.com/sagernet/sing-box/constant.Version=${VERSION}' -X runtime.godebugDefault=multipathtcp=0,tlssha1=1 -checklinkname=0 -s -w -buildid="
+          
+          mkdir -p dist
+          GOOS=linux GOARCH=arm64 CGO_ENABLED=0 \
+            go build -v -trimpath -tags "${TAGS}" -ldflags "${LDFLAGS}" -o dist/sing-box ./cmd/sing-box
+          
+          echo "Original size:"
+          ls -lh dist/sing-box
+          
+          echo "Compressing with UPX..."
+          upx --best --lzma dist/sing-box
+          
+          echo "Compressed size:"
+          ls -lh dist/sing-box
+          
+          cd dist
+          tar -czvf "sing-box-${VERSION}-linux-arm64.tar.gz" sing-box
+          sha256sum "sing-box-${VERSION}-linux-arm64.tar.gz" > "sing-box-${VERSION}-linux-arm64.tar.gz.sha256"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sing-box-linux-arm64-mini
+          path: |
+            dist/sing-box
+            dist/*.tar.gz
+            dist/*.sha256
+
+      - name: Create Release
+        if: github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version != '' && inputs.version != 'custom' && inputs.version || 'mini-latest' }}
+          name: Sing-Box Mini ${{ inputs.version != '' && inputs.version != 'custom' && inputs.version || 'Latest' }}
+          draft: false
+          prerelease: false
+          files: |
+            dist/sing-box
+            dist/*.tar.gz
+            dist/*.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
