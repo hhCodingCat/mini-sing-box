@@ -48,6 +48,9 @@ jobs:
             VERSION="${TAG}"
           fi
           
+          # Compatibility patch: restore legacy inbound fields support for HomeProxy
+          git apply .github/patches/homeproxy_compat.patch 2>/dev/null || true
+
           TAGS="with_quic,with_utls,badlinkname,tfogo_checklinkname0"
           LDFLAGS="-X 'github.com/sagernet/sing-box/constant.Version=${VERSION}' -X runtime.godebugDefault=multipathtcp=0,tlssha1=1 -checklinkname=0 -s -w -buildid="
           

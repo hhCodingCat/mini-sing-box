@@ -1,0 +1,45 @@
+diff --git a/option/inbound.go b/option/inbound.go
+index 7bca565..eda313f 100644
+--- a/option/inbound.go
++++ b/option/inbound.go
+@@ -49,9 +49,7 @@ func (h *Inbound) UnmarshalJSONContext(ctx context.Context, content []byte) erro
+ 	}
+ 	if listenWrapper, isListen := options.(ListenOptionsWrapper); isListen {
+ 		//nolint:staticcheck
+-		if listenWrapper.TakeListenOptions().InboundOptions != (InboundOptions{}) {
+-			return E.New("legacy inbound fields are deprecated in sing-box 1.11.0 and removed in sing-box 1.13.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-legacy-inbound-fields-to-rule-actions")
+-		}
++		_ = listenWrapper
+ 	}
+ 	h.Options = options
+ 	return nil
+diff --git a/option/outbound.go b/option/outbound.go
+index 5780929..3a48072 100644
+--- a/option/outbound.go
++++ b/option/outbound.go
+@@ -54,9 +54,7 @@ func (h *Outbound) UnmarshalJSONContext(ctx context.Context, content []byte) err
+ 	}
+ 	if listenWrapper, isListen := options.(ListenOptionsWrapper); isListen {
+ 		//nolint:staticcheck
+-		if listenWrapper.TakeListenOptions().InboundOptions != (InboundOptions{}) {
+-			return E.New("legacy inbound fields are deprecated in sing-box 1.11.0 and removed in sing-box 1.13.0, use rule actions instead")
+-		}
++		_ = listenWrapper
+ 	}
+ 	h.Options = options
+ 	return nil
+diff --git a/protocol/tun/inbound.go b/protocol/tun/inbound.go
+index 69f74a4..c88844f 100644
+--- a/protocol/tun/inbound.go
++++ b/protocol/tun/inbound.go
+@@ -78,9 +78,7 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
+ 		return nil, E.New("GSO option in tun is deprecated in sing-box 1.11.0 and removed in sing-box 1.12.0")
+ 	}
+ 	//nolint:staticcheck
+-	if options.InboundOptions != (option.InboundOptions{}) {
+-		return nil, E.New("legacy inbound fields are deprecated in sing-box 1.11.0 and removed in sing-box 1.13.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-legacy-inbound-fields-to-rule-actions")
+-	}
++	_ = options.InboundOptions
+ 	if options.Stack != "" {
+ 		deprecated.Report(ctx, deprecated.OptionTunStack)
+ 	}
