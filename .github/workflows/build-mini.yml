@@ -15,6 +15,9 @@ on:
     paths:
       - '.github/workflows/build-mini.yml'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build Mini sing-box (linux/arm64)
